@@ -1,0 +1,10 @@
+numpy
+opencv_python
+opencv_python_headless
+pandas
+Pillow
+roboflow
+supervision
+torch
+transformers
+ultralytics
