@@ -13,7 +13,7 @@ The system transforms raw basketball video into an enriched tactical video conta
 <!-- OUTPUT IMAGE HERE -->
 
 <p align="center">
-  <img src="images/hoopvision_output.jpg" alt="HoopVision Output" width="900">
+  <img src="images/hoopvision_result.png" alt="HoopVision Output" width="900">
 </p>
 
 <p align="center">
