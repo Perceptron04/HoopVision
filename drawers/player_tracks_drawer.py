@@ -4,10 +4,6 @@ from .utils import draw_traingle
 
 
 class PlayerTracksDrawer:
-    """
-    A class responsible for drawing player bounding boxes,
-    player IDs, confidence scores, and ball possession indicators.
-    """
 
     def __init__(
         self,
@@ -25,10 +21,6 @@ class PlayerTracksDrawer:
         player_assignment,
         ball_aquisition
     ):
-        """
-        Draw player bounding boxes, IDs, confidence scores,
-        and ball possession indicators.
-        """
 
         output_video_frames = []
 
@@ -42,7 +34,7 @@ class PlayerTracksDrawer:
 
             player_id_has_ball = ball_aquisition[frame_num]
 
-            # Draw Players
+            
             for track_id, player in player_dict.items():
 
                 team_id = player_assignment_for_frame.get(
@@ -55,7 +47,7 @@ class PlayerTracksDrawer:
                 else:
                     color = self.team_2_color
 
-                # Player bounding box
+                
                 x1, y1, x2, y2 = map(
                     int,
                     player["bbox"]
@@ -69,7 +61,7 @@ class PlayerTracksDrawer:
                     2
                 )
 
-                # Get confidence
+                
                 confidence = player.get(
                     "confidence",
                     0.0
@@ -77,7 +69,7 @@ class PlayerTracksDrawer:
 
                 confidence_text = f"{confidence:.2f}"
 
-                # Display Player ID + Confidence
+                
                 label = f"ID: {track_id} | Conf: {confidence_text}"
 
                 label_y = max(
@@ -95,7 +87,7 @@ class PlayerTracksDrawer:
                     2
                 )
 
-                # Ball possession indicator
+                
                 if track_id == player_id_has_ball:
 
                     frame = draw_traingle(

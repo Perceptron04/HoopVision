@@ -8,18 +8,12 @@ from utils import read_stub, save_stub
 
 
 class PlayerTracker:
-    """
-    A class that handles player detection and tracking using YOLO and ByteTrack.
-    """
 
     def __init__(self, model_path):
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
 
     def detect_frames(self, frames):
-        """
-        Detect players in a sequence of frames using batch processing.
-        """
 
         batch_size = 20
         detections = []
@@ -40,17 +34,10 @@ class PlayerTracker:
         read_from_stub=False,
         stub_path=None
     ):
-        """
-        Get player tracking results for a sequence of frames.
-
-        Each player track contains:
-            - bbox
-            - confidence
-        """
 
         tracks = read_stub(read_from_stub, stub_path)
 
-        # Only use cached tracks if they contain confidence scores.
+        
         if tracks is not None and len(tracks) == len(frames):
 
             cache_has_confidence = True
@@ -67,7 +54,7 @@ class PlayerTracker:
             if cache_has_confidence:
                 return tracks
 
-        # Run detection again if old cache does not contain confidence.
+        
         detections = self.detect_frames(frames)
 
         tracks = []
@@ -79,12 +66,12 @@ class PlayerTracker:
                 v: k for k, v in cls_names.items()
             }
 
-            # Convert to supervision Detection format
+            
             detection_supervision = sv.Detections.from_ultralytics(
                 detection
             )
 
-            # Track objects
+            
             detection_with_tracks = self.tracker.update_with_detections(
                 detection_supervision
             )

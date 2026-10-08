@@ -10,7 +10,7 @@ class SpeedAndDistanceDrawer():
         for frame,player_tracks,player_distance,player_speed in zip(video_frames,player_tracks,player_distances_per_frame,player_speed_per_frame):            
             output_frame = frame.copy()
 
-            # Get Total Distance
+            
             for player_id, distance in player_distance.items():
                 if player_id not in total_distances:
                     total_distances[player_id]=0

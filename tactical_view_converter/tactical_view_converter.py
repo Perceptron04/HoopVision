@@ -22,7 +22,7 @@ class TacticalViewConverter:
         self.actual_height_in_meters = 15
 
         self.key_points = [
-            # left edge
+            
             (0, 0),
             (0, int((0.91 / self.actual_height_in_meters) * self.height)),
             (0, int((5.18 / self.actual_height_in_meters) * self.height)),
@@ -30,11 +30,11 @@ class TacticalViewConverter:
             (0, int((14.1 / self.actual_height_in_meters) * self.height)),
             (0, int(self.height)),
 
-            # Middle line
+            
             (int(self.width / 2), self.height),
             (int(self.width / 2), 0),
 
-            # Left Free throw line
+            
             (
                 int((5.79 / self.actual_width_in_meters) * self.width),
                 int((5.18 / self.actual_height_in_meters) * self.height)
@@ -44,7 +44,7 @@ class TacticalViewConverter:
                 int((10 / self.actual_height_in_meters) * self.height)
             ),
 
-            # right edge
+            
             (self.width, int(self.height)),
             (
                 self.width,
@@ -64,7 +64,7 @@ class TacticalViewConverter:
             ),
             (self.width, 0),
 
-            # Right Free throw line
+            
             (
                 int(
                     ((self.actual_width_in_meters - 5.79)
@@ -82,45 +82,41 @@ class TacticalViewConverter:
         ]
 
     def validate_keypoints(self, keypoints_list):
-        """
-        Validates detected keypoints by comparing their proportional distances
-        to the tactical view keypoints.
-        """
 
         keypoints_list = deepcopy(keypoints_list)
 
         for frame_idx, frame_keypoints in enumerate(keypoints_list):
 
-            # No keypoints detected in this frame
+            
             if frame_keypoints is None or len(frame_keypoints.xy) == 0:
                 continue
 
             frame_keypoints = frame_keypoints.xy.tolist()[0]
 
-            # Safety check
+            
             if len(frame_keypoints) == 0:
                 continue
 
-            # Get indices of detected keypoints
+            
             detected_indices = [
                 i
                 for i, kp in enumerate(frame_keypoints)
                 if kp[0] > 0 and kp[1] > 0
             ]
 
-            # Need at least 3 detected keypoints
+            
             if len(detected_indices) < 3:
                 continue
 
             invalid_keypoints = []
 
-            # Validate each detected keypoint
+            
             for i in detected_indices:
 
                 if frame_keypoints[i][0] == 0 and frame_keypoints[i][1] == 0:
                     continue
 
-                # Choose two other detected keypoints
+                
                 other_indices = [
                     idx
                     for idx in detected_indices
@@ -132,7 +128,7 @@ class TacticalViewConverter:
 
                 j, k = other_indices[0], other_indices[1]
 
-                # Distances between detected keypoints
+                
                 d_ij = measure_distance(
                     frame_keypoints[i],
                     frame_keypoints[j]
@@ -143,7 +139,7 @@ class TacticalViewConverter:
                     frame_keypoints[k]
                 )
 
-                # Distances between corresponding tactical keypoints
+                
                 t_ij = measure_distance(
                     self.key_points[i],
                     self.key_points[j]
@@ -175,7 +171,7 @@ class TacticalViewConverter:
 
                     error = abs(error)
 
-                    # 80% error margin
+                    
                     if error > 0.8:
                         keypoints_list[frame_idx].xy[0][i] *= 0
                         keypoints_list[frame_idx].xyn[0][i] *= 0
@@ -189,10 +185,6 @@ class TacticalViewConverter:
         keypoints_list,
         player_tracks
     ):
-        """
-        Transform player positions from video frame coordinates
-        to tactical view coordinates.
-        """
 
         tactical_player_positions = []
 
@@ -200,37 +192,37 @@ class TacticalViewConverter:
             zip(keypoints_list, player_tracks)
         ):
 
-            # Initialize empty dictionary for this frame
+            
             tactical_positions = {}
 
-            # No keypoints detected
+            
             if frame_keypoints is None or len(frame_keypoints.xy) == 0:
                 tactical_player_positions.append(tactical_positions)
                 continue
 
             frame_keypoints = frame_keypoints.xy.tolist()[0]
 
-            # No keypoints after conversion
+            
             if len(frame_keypoints) == 0:
                 tactical_player_positions.append(tactical_positions)
                 continue
 
-            # Get detected keypoints
+            
             detected_keypoints = frame_keypoints
 
-            # Filter out undetected keypoints
+            
             valid_indices = [
                 i
                 for i, kp in enumerate(detected_keypoints)
                 if kp[0] > 0 and kp[1] > 0
             ]
 
-            # Need at least 4 points for homography
+            
             if len(valid_indices) < 4:
                 tactical_player_positions.append(tactical_positions)
                 continue
 
-            # Create source and target point arrays
+            
             source_points = np.array(
                 [
                     detected_keypoints[i]
@@ -249,28 +241,28 @@ class TacticalViewConverter:
 
             try:
 
-                # Create homography transformer
+                
                 homography = Homography(
                     source_points,
                     target_points
                 )
 
-                # Transform each player's position
+                
                 for player_id, player_data in frame_tracks.items():
 
                     bbox = player_data["bbox"]
 
-                    # Bottom center of player's bounding box
+                    
                     player_position = np.array([
                         get_foot_position(bbox)
                     ])
 
-                    # Transform to tactical view
+                    
                     tactical_position = homography.transform_points(
                         player_position
                     )
 
-                    # Skip positions outside tactical view
+                    
                     if (
                         tactical_position[0][0] < 0
                         or tactical_position[0][0] > self.width
@@ -284,7 +276,7 @@ class TacticalViewConverter:
                     )
 
             except (ValueError, cv2.error):
-                # If homography fails, continue with empty dictionary
+                
                 pass
 
             tactical_player_positions.append(tactical_positions)

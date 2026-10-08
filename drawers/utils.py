@@ -1,9 +1,3 @@
-"""
-A utility module providing functions for drawing shapes on video frames.
-
-This module includes functions to draw triangles and ellipses on frames, which can be used
-to represent various annotations such as player positions or ball locations in sports analysis.
-"""
 
 import cv2 
 import numpy as np
@@ -12,17 +6,6 @@ sys.path.append('../')
 from utils import get_center_of_bbox, get_bbox_width, get_foot_position
 
 def draw_traingle(frame,bbox,color):
-    """
-    Draws a filled triangle on the given frame at the specified bounding box location.
-
-    Args:
-        frame (numpy.ndarray): The frame on which to draw the triangle.
-        bbox (tuple): A tuple representing the bounding box (x, y, width, height).
-        color (tuple): The color of the triangle in BGR format.
-
-    Returns:
-        numpy.ndarray: The frame with the triangle drawn on it.
-    """
     y= int(bbox[1])
     x,_ = get_center_of_bbox(bbox)
 
@@ -37,18 +20,6 @@ def draw_traingle(frame,bbox,color):
     return frame
 
 def draw_ellipse(frame,bbox,color,track_id=None):
-    """
-    Draws an ellipse and an optional rectangle with a track ID on the given frame at the specified bounding box location.
-
-    Args:
-        frame (numpy.ndarray): The frame on which to draw the ellipse.
-        bbox (tuple): A tuple representing the bounding box (x, y, width, height).
-        color (tuple): The color of the ellipse in BGR format.
-        track_id (int, optional): The track ID to display inside a rectangle. Defaults to None.
-
-    Returns:
-        numpy.ndarray: The frame with the ellipse and optional track ID drawn on it.
-    """
     y2 = int(bbox[3])
     x_center, _ = get_center_of_bbox(bbox)
     width = get_bbox_width(bbox)

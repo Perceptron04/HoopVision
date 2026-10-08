@@ -4,7 +4,7 @@ class FrameNumberDrawer:
         pass
 
     def draw(self,frames):
-        # Write the frame number on the top left corner of the frame
+        
         output_frames = []
         for i in range(len(frames)):
             frame = frames[i].copy()
