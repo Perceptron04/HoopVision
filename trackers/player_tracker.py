@@ -1,32 +1,84 @@
 from ultralytics import YOLO
 import supervision as sv
-import sys
-
-sys.path.append('../')
 
 from utils import read_stub, save_stub
 
 
 class PlayerTracker:
-
     def __init__(self, model_path):
         self.model = YOLO(model_path)
         self.tracker = sv.ByteTrack()
 
-    def detect_frames(self, frames):
-
-        batch_size = 20
+    def detect_frames(self, frames, batch_size=20):
+        """
+        Run player detection on batches of frames.
+        """
         detections = []
 
         for i in range(0, len(frames), batch_size):
-            detections_batch = self.model.predict(
-                frames[i:i + batch_size],
-                conf=0.5
+            batch = frames[i:i + batch_size]
+
+            batch_detections = self.model.predict(
+                batch,
+                conf=0.5,
+                verbose=False
             )
 
-            detections += detections_batch
+            detections.extend(batch_detections)
 
         return detections
+
+    def _tracks_from_detections(self, detections):
+        """
+        Convert YOLO detections into tracked player dictionaries.
+        ByteTrack is kept alive across frames to preserve track IDs.
+        """
+        tracks = []
+
+        for detection in detections:
+            class_names = detection.names
+            class_names_inv = {
+                name: class_id
+                for class_id, name in class_names.items()
+            }
+
+            if "Player" not in class_names_inv:
+                raise ValueError(
+                    "The player model has no class named 'Player'. "
+                    f"Available classes: {list(class_names.values())}"
+                )
+
+            player_class_id = class_names_inv["Player"]
+
+            supervision_detections = (
+                sv.Detections.from_ultralytics(detection)
+            )
+
+            tracked_detections = (
+                self.tracker.update_with_detections(
+                    supervision_detections
+                )
+            )
+
+            frame_tracks = {}
+
+            for item in tracked_detections:
+                bbox = item[0].tolist()
+                confidence = item[2]
+                class_id = item[3]
+                track_id = item[4]
+
+                if class_id != player_class_id or track_id is None:
+                    continue
+
+                frame_tracks[int(track_id)] = {
+                    "bbox": bbox,
+                    "confidence": float(confidence)
+                }
+
+            tracks.append(frame_tracks)
+
+        return tracks
 
     def get_object_tracks(
         self,
@@ -34,63 +86,26 @@ class PlayerTracker:
         read_from_stub=False,
         stub_path=None
     ):
+        """
+        Process a list of frames and return player tracks.
 
-        tracks = read_stub(read_from_stub, stub_path)
+        This method preserves the existing interface used by main.py.
+        It still requires frames to be held in memory.
+        """
+        cached_tracks = read_stub(read_from_stub, stub_path)
 
-        
-        if tracks is not None and len(tracks) == len(frames):
-
-            cache_has_confidence = True
-
-            for frame_tracks in tracks:
-                for player in frame_tracks.values():
-                    if "confidence" not in player:
-                        cache_has_confidence = False
-                        break
-
-                if not cache_has_confidence:
-                    break
+        if cached_tracks is not None and len(cached_tracks) == len(frames):
+            cache_has_confidence = all(
+                "confidence" in player
+                for frame_tracks in cached_tracks
+                for player in frame_tracks.values()
+            )
 
             if cache_has_confidence:
-                return tracks
+                return cached_tracks
 
-        
         detections = self.detect_frames(frames)
-
-        tracks = []
-
-        for frame_num, detection in enumerate(detections):
-
-            cls_names = detection.names
-            cls_names_inv = {
-                v: k for k, v in cls_names.items()
-            }
-
-            
-            detection_supervision = sv.Detections.from_ultralytics(
-                detection
-            )
-
-            
-            detection_with_tracks = self.tracker.update_with_detections(
-                detection_supervision
-            )
-
-            tracks.append({})
-
-            for frame_detection in detection_with_tracks:
-
-                bbox = frame_detection[0].tolist()
-                confidence = frame_detection[2]
-                cls_id = frame_detection[3]
-                track_id = frame_detection[4]
-
-                if cls_id == cls_names_inv['Player']:
-
-                    tracks[frame_num][track_id] = {
-                        "bbox": bbox,
-                        "confidence": float(confidence)
-                    }
+        tracks = self._tracks_from_detections(detections)
 
         save_stub(stub_path, tracks)
 
